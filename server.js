@@ -15,7 +15,6 @@ const FormData = require('form-data');
 const { v4: uuidv4 } = require('uuid');
 const cron = require('node-cron');
 const multer = require('multer');
-const { sendVerificationEmail, sendPasswordResetEmail } = require('./utils/email-service');
 const validator = require('validator');
 const { body, validationResult } = require('express-validator');
 
