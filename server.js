@@ -69,6 +69,7 @@ app.use(cors({
 app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(rateLimit(CONFIG.RATE_LIMIT));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -1931,6 +1932,10 @@ app.get('/api/health', (req, res) => {
   ]).then(() => {
     res.json(health);
   });
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Cron Jobs
