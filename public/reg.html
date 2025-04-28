@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Voltura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #BC13FE;
+            --dark: #0A081A;
+            --accent: #00F3FF;
+            --light: rgba(255, 255, 255, 0.9);
+            --error: #ff4d4d;
+            --success: #4dff4d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--dark);
+            padding: 1rem;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(188, 19, 254, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 243, 255, 0.1) 0%, transparent 20%);
+        }
+
+        .container {
+            background: rgba(11, 9, 26, 0.95);
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 2rem rgba(188, 19, 254, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(188, 19, 254, 0.3);
+            border-radius: 0.5rem;
+            color: var(--light);
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(188, 19, 254, 0.2);
+        }
+
+        .avatar-upload {
+            text-align: center;
+            margin: 1rem 0 1.5rem;
+        }
+
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed var(--primary);
+            margin: 0 auto 0.5rem;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .avatar-preview:hover {
+            border-color: var(--accent);
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-upload input {
+            display: none;
+        }
+
+        .upload-label {
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+
+        .upload-label:hover {
+            color: var(--primary);
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        .strength-meter {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none;
+            border-radius: 0.5rem;
+            color: var(--light);
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(188, 19, 254, 0.3);
+        }
+
+        button[type="submit"].loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        button[type="submit"].loading::after {
+            content: '';
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1.2rem;
+            height: 1.2rem;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: var(--light);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: translateY(-50%) rotate(360deg); }
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .login-link a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: var(--light);
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 1rem rgba(188, 19, 254, 0.2);
+            display: none;
+            z-index: 1000;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .toast.error {
+            border-color: var(--error);
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Join Voltura</h1>
+            <p>Create your account to get started</p>
+        </div>
+
+        <form id="registerForm" enctype="multipart/form-data">
+            <div class="avatar-upload">
+                <div class="avatar-preview" id="avatarPreview">
+                    <i class="fas fa-user-plus" style="font-size: 1.8rem; color: var(--accent);"></i>
+                </div>
+                <input type="file" id="profilePic" name="profilePic" accept="image/*">
+                <label for="profilePic" class="upload-label">Choose Profile Picture</label>
+            </div>
+
+            <div class="form-group">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" id="username" name="username" placeholder="Username" 
+                       minlength="3" maxlength="30" pattern="[a-zA-Z0-9_]+" required>
+            </div>
+
+            <div class="form-group">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" id="email" name="email" placeholder="Email Address" required>
+            </div>
+
+            <div class="form-group">
+                <i class="fas fa-calendar-day input-icon"></i>
+                <input type="date" id="birthdate" name="birthdate" required>
+            </div>
+
+            <div class="form-group">
+                <i class="fas fa-lock input-icon"></i>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" placeholder="Password" 
+                           minlength="8" required>
+                    <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+                </div>
+                <div class="strength-meter">
+                    <div class="strength-bar" id="strengthBar"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="confirmPassword" name="confirmPassword" 
+                       placeholder="Confirm Password" required>
+            </div>
+
+            <button type="submit" id="submitBtn">Create Account</button>
+
+            <div class="login-link">
+                Already have an account? <a href="login.html">Sign In</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('registerForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const avatarPreview = document.getElementById('avatarPreview');
+            const profilePicInput = document.getElementById('profilePic');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const togglePassword = document.getElementById('togglePassword');
+            const strengthBar = document.getElementById('strengthBar');
+            const birthdateInput = document.getElementById('birthdate');
+            const toast = document.getElementById('toast');
+
+            // Set max birthdate (minimum age 13)
+            const today = new Date();
+            const maxDate = new Date();
+            maxDate.setFullYear(today.getFullYear() - 13);
+            birthdateInput.max = maxDate.toISOString().split('T')[0];
+
+            // Profile picture preview
+            profilePicInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        showToast('Image must be less than 5MB', 'error');
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Profile Preview">`;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Password visibility toggle
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.classList.toggle('fa-eye-slash');
+            });
+
+            // Password strength meter
+            passwordInput.addEventListener('input', function() {
+                const strength = calculatePasswordStrength(this.value);
+                strengthBar.style.width = `${strength}%`;
+                strengthBar.style.backgroundColor = getStrengthColor(strength);
+            });
+
+            // Form submission
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // Validate age
+                const birthdate = new Date(birthdateInput.value);
+                const age = today.getFullYear() - birthdate.getFullYear();
+                if (age < 14) {
+                    showToast('You must be at least 14 years old', 'error');
+                    return;
+                }
+
+                // Validate password match
+                if (passwordInput.value !== confirmPasswordInput.value) {
+                    showToast('Passwords do not match', 'error');
+                    return;
+                }
+
+                // Validate password strength
+                if (calculatePasswordStrength(passwordInput.value) < 50) {
+                    showToast('Password is too weak', 'error');
+                    return;
+                }
+
+                try {
+                    submitBtn.classList.add('loading');
+                    const formData = new FormData(form);
+                    
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        if (response.status === 400) {
+                            if (data.error.includes('Username')) {
+                                throw new Error('Username already exists');
+                            } else if (data.error.includes('Email')) {
+                                throw new Error('Email already registered');
+                            }
+                        }
+                        throw new Error(data.error || 'Registration failed');
+                    }
+
+                    showToast('Account created! Verification email sent', 'success');
+                    
+                    // Redirect to verification page after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = `/dashboard.html`;
+                    }, 2000);
+                } catch (error) {
+                    showToast(error.message, 'error');
+                    console.error('Registration error:', error);
+                } finally {
+                    submitBtn.classList.remove('loading');
+                }
+            });
+
+            function calculatePasswordStrength(password) {
+                let strength = 0;
+                if (password.length >= 8) strength += 25;
+                if (/[A-Z]/.test(password)) strength += 25;
+                if (/[0-9]/.test(password)) strength += 25;
+                if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+                return Math.min(strength, 100);
+            }
+
+            function getStrengthColor(strength) {
+                if (strength < 40) return 'var(--error)';
+                if (strength < 70) return 'orange';
+                return 'var(--success)';
+            }
+
+            function showToast(message, type = '') {
+                toast.textContent = message;
+                toast.className = 'toast';
+                if (type) toast.classList.add(type);
+                toast.style.display = 'block';
+                
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
