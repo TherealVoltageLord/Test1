@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voltura-Feed</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #BC13FE;
+            --dark: #0A081A;
+            --accent: #00F3FF;
+            --light: rgba(255, 255, 255, 0.9);
+            --card-bg: rgba(17, 15, 34, 0.9);
+            --error: #ff4d4d;
+            --success: #4BB543;
+            --warning: #FFCC00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: var(--dark);
+            color: var(--light);
+            min-height: 100vh;
+            padding-bottom: 60px; /* For bottom navigation */
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--primary);
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-icons {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .nav-icon {
+            color: var(--light);
+            font-size: 1.3rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--error);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-pic {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            cursor: pointer;
+        }
+
+        /* Bottom Navigation (Mobile) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: var(--card-bg);
+            border-top: 1px solid var(--primary);
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .bottom-nav-icon {
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .bottom-nav-icon.active {
+            color: var(--primary);
+        }
+
+        /* Dropdown Menu */
+        .dropdown {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: var(--card-bg);
+            border: 1px solid var(--primary);
+            border-radius: 5px;
+            width: 200px;
+            display: none;
+            z-index: 101;
+        }
+
+        .dropdown.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(188, 19, 254, 0.1);
+        }
+
+        /* Main Content */
+        .main-container {
+            max-width: 600px;
+            margin: 60px auto 0;
+            padding: 1rem;
+        }
+
+        /* Stories */
+        .stories {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            scrollbar-width: none;
+        }
+
+        .stories::-webkit-scrollbar {
+            display: none;
+        }
+
+        .story {
+            flex: 0 0 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            padding: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .story.has-unseen {
+            border-color: var(--accent);
+        }
+
+        .story-user {
+            position: absolute;
+            bottom: -20px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .story-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .story-create {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .story-create-icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        /* Posts */
+        .post {
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid rgba(188, 19, 254, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            gap: 0.8rem;
+        }
+
+        .post-user-pic {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .post-username {
+            font-weight: 600;
+        }
+
+        .post-more {
+            margin-left: auto;
+            cursor: pointer;
+        }
+
+        .post-content {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+        }
+
+        .post-video {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: black;
+            position: relative;
+        }
+
+        .video-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .post-video:hover .video-controls {
+            opacity: 1;
+        }
+
+        .video-control {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .post-actions {
+            padding: 0.8rem 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .post-action {
+            font-size: 1.5rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .post-action.liked {
+            color: var(--error);
+        }
+
+        .post-action-save {
+            margin-left: auto;
+        }
+
+        .post-likes {
+            padding: 0 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+
+        .post-caption {
+            padding: 0 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .post-tags {
+            color: var(--accent);
+            margin-right: 5px;
+        }
+
+        .post-comments {
+            padding: 0 1rem;
+            color: #aaa;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+
+        .post-time {
+            padding: 0 1rem;
+            color: #aaa;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .comment-input-container {
+            display: flex;
+            padding: 0.8rem 1rem;
+            border-top: 1px solid rgba(188, 19, 254, 0.1);
+            align-items: center;
+        }
+
+        .comment-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--light);
+            outline: none;
+        }
+
+        .comment-post {
+            color: var(--accent);
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .comment-emoji {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        /* Sidebar (Desktop) */
+        .sidebar {
+            display: none;
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 300px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            gap: 1rem;
+        }
+
+        .user-info-details {
+            flex: 1;
+        }
+
+        .username {
+            font-weight: 600;
+        }
+
+        .name {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .switch {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .suggestions {
+            margin-top: 1rem;
+        }
+
+        .suggestions-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+        }
+
+        .suggestions-title {
+            color: #aaa;
+            font-weight: 600;
+        }
+
+        .see-all {
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .suggestion {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            gap: 1rem;
+        }
+
+        .suggestion-pic {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .suggestion-details {
+            flex: 1;
+        }
+
+        .suggestion-username {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .suggestion-info {
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+
+        .suggestion-follow {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .footer-links {
+            margin-top: 1rem;
+            padding: 0 1rem;
+            font-size: 0.7rem;
+            color: #aaa;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .footer-link {
+            cursor: pointer;
+        }
+
+        .copyright {
+            margin-top: 1rem;
+            padding: 0 1rem;
+            font-size: 0.7rem;
+            color: #aaa;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--primary);
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .modal-user {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 0;
+            gap: 1rem;
+        }
+
+        .modal-user-pic {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .modal-user-username {
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .modal-user-follow {
+            color: var(--accent);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Story Viewer */
+        .story-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 300;
+            display: none;
+        }
+
+        .story-viewer-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .story-viewer-media {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .story-viewer-header {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 1;
+        }
+
+        .story-viewer-user {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .story-viewer-username {
+            font-weight: 600;
+        }
+
+        .story-viewer-time {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .story-viewer-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .story-progress-container {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            right: 0;
+            padding: 0 1rem;
+            display: flex;
+            gap: 5px;
+            z-index: 1;
+        }
+
+        .story-progress {
+            flex: 1;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        .story-progress-bar {
+            height: 100%;
+            background: white;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .story-viewer-controls {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            display: flex;
+        }
+
+        .story-viewer-prev {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .story-viewer-next {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        /* Create Post Modal */
+        .create-post-modal {
+            max-width: 600px;
+            width: 90%;
+            height: 80vh;
+        }
+
+        .create-post-steps {
+            display: flex;
+            height: 100%;
+        }
+
+        .create-post-step {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+        }
+
+        .create-post-step.active {
+            display: flex;
+        }
+
+        .create-post-header {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .create-post-title {
+            font-weight: 600;
+        }
+
+        .create-post-next {
+            color: var(--accent);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .create-post-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .create-post-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .create-post-text {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .create-post-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .create-post-preview {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            margin-bottom: 1rem;
+        }
+
+        .create-post-caption {
+            width: 100%;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.8rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            resize: none;
+            outline: none;
+        }
+
+        .create-post-tag-input {
+            width: 100%;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            outline: none;
+        }
+
+        .create-post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .create-post-tag {
+            background: rgba(188, 19, 254, 0.2);
+            color: var(--accent);
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .create-post-tag-remove {
+            cursor: pointer;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (min-width: 1000px) {
+            .main-container {
+                margin-left: calc(50vw - 300px);
+            }
+            .sidebar {
+                display: block;
+            }
+            .bottom-nav {
+                display: none;
+            }
+        }
+
+        /* Dark mode toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 99;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">Voltura</div>
+        <div class="nav-icons">
+            <i class="fas fa-plus nav-icon" id="createBtn"></i>
+            <i class="fas fa-heart nav-icon" id="notificationsBtn">
+                <span class="notification-badge" id="notificationBadge" style="display: none;"></span>
+            </i>
+            <img src="default-avatar.jpg" class="profile-pic" id="profilePic">
+        </div>
+        <div class="dropdown" id="dropdownMenu">
+            <div class="dropdown-item" onclick="goToProfile()">
+                <i class="fas fa-user"></i> Profile
+            </div>
+            <div class="dropdown-item" onclick="goToSaved()">
+                <i class="fas fa-bookmark"></i> Saved
+            </div>
+            <div class="dropdown-item" onclick="goToSettings()">
+                <i class="fas fa-cog"></i> Settings
+            </div>
+            <div class="dropdown-item" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </div>
+        </div>
+    </nav>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <div class="bottom-nav">
+        <i class="fas fa-home bottom-nav-icon active" id="homeBtn"></i>
+        <i class="fas fa-search bottom-nav-icon" id="searchBtn"></i>
+        <i class="fas fa-plus-square bottom-nav-icon" id="createBtnMobile"></i>
+        <i class="fas fa-heart bottom-nav-icon" id="notificationsBtnMobile">
+            <span class="notification-badge" id="notificationBadgeMobile" style="display: none;"></span>
+        </i>
+        <i class="fas fa-user bottom-nav-icon" id="profileBtnMobile"></i>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Stories -->
+        <div class="stories" id="storiesContainer">
+            <!-- Stories will be loaded here -->
+        </div>
+
+        <!-- Posts -->
+        <div id="postsContainer">
+            <!-- Posts will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Sidebar (Desktop) -->
+    <div class="sidebar">
+        <div class="user-info">
+            <img src="default-avatar.jpg" class="profile-pic" id="sidebarProfilePic">
+            <div class="user-info-details">
+                <div class="username" id="sidebarUsername"></div>
+                <div class="name" id="sidebarName"></div>
+            </div>
+            <div class="switch" id="switchAccount">Switch</div>
+        </div>
+        <div class="suggestions">
+            <div class="suggestions-header">
+                <div class="suggestions-title">Suggestions For You</div>
+                <div class="see-all">See All</div>
+            </div>
+            <div id="suggestionsContainer"></div>
+        </div>
+        <div class="footer-links">
+            <span class="footer-link">About</span>
+            <span class="footer-link">Help</span>
+            <span class="footer-link">Press</span>
+            <span class="footer-link">API</span>
+            <span class="footer-link">Jobs</span>
+            <span class="footer-link">Privacy</span>
+            <span class="footer-link">Terms</span>
+            <span class="footer-link">Locations</span>
+            <span class="footer-link">Language</span>
+        </div>
+        <div class="copyright">© 2023 VOLTURA FROM META</div>
+    </div>
+
+    <!-- Likes Modal -->
+    <div class="modal" id="likesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Likes</h3>
+                <i class="fas fa-times modal-close" id="closeLikesModal"></i>
+            </div>
+            <div id="likesList"></div>
+        </div>
+    </div>
+
+    <!-- Comments Modal -->
+    <div class="modal" id="commentsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Comments</h3>
+                <i class="fas fa-times modal-close" id="closeCommentsModal"></i>
+            </div>
+            <div class="post" id="modalPostContainer"></div>
+            <div id="commentsList"></div>
+            <div class="comment-input-container">
+                <i class="far fa-smile comment-emoji" id="emojiPickerBtn"></i>
+                <input type="text" class="comment-input" placeholder="Add a comment..." id="modalCommentInput">
+                <span class="comment-post" id="modalCommentPost">Post</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story Viewer -->
+    <div class="story-viewer" id="storyViewer">
+        <div class="story-progress-container" id="storyProgressContainer"></div>
+        <div class="story-viewer-header">
+            <div class="story-viewer-user">
+                <img src="" class="profile-pic" id="storyViewerUserPic">
+                <div>
+                    <div class="story-viewer-username" id="storyViewerUsername"></div>
+                    <div class="story-viewer-time" id="storyViewerTime"></div>
+                </div>
+            </div>
+            <i class="fas fa-times story-viewer-close" id="closeStoryViewer"></i>
+        </div>
+        <div class="story-viewer-content">
+            <img src="" class="story-viewer-media" id="storyViewerMedia">
+            <video controls class="story-viewer-media" id="storyViewerVideo" style="display: none;"></video>
+        </div>
+        <div class="story-viewer-controls">
+            <div class="story-viewer-prev" id="storyViewerPrev"></div>
+            <div class="story-viewer-next" id="storyViewerNext"></div>
+        </div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div class="modal" id="createPostModal">
+        <div class="modal-content create-post-modal">
+            <div class="create-post-steps">
+                <!-- Step 1: Upload -->
+                <div class="create-post-step active" id="createPostStep1">
+                    <div class="create-post-header">
+                        <div class="create-post-title">Create new post</div>
+                        <div class="create-post-next" id="createPostNext1">Next</div>
+                    </div>
+                    <div class="create-post-content">
+                        <i class="fas fa-images create-post-icon"></i>
+                        <div class="create-post-text">Drag photos and videos here</div>
+                        <input type="file" id="postMediaInput" accept="image/*,video/*" style="display: none;">
+                        <button class="create-post-button" id="selectFromComputer">Select from computer</button>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Crop/Edit -->
+                <div class="create-post-step" id="createPostStep2">
+                    <div class="create-post-header">
+                        <div class="create-post-title">Crop</div>
+                        <div class="create-post-next" id="createPostNext2">Next</div>
+                    </div>
+                    <div class="create-post-content">
+                        <img src="" class="create-post-preview" id="createPostPreview">
+                        <div class="create-post-text">Adjust the crop and rotation</div>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Add Details -->
+                <div class="create-post-step" id="createPostStep3">
+                    <div class="create-post-header">
+                        <div class="create-post-title">Create new post</div>
+                        <div class="create-post-next" id="createPostNext3">Share</div>
+                    </div>
+                    <div class="create-post-content">
+                        <img src="" class="create-post-preview" id="createPostFinalPreview">
+                        <textarea class="create-post-caption" placeholder="Write a caption..." id="postCaption"></textarea>
+                        <input type="text" class="create-post-tag-input" placeholder="Add tags (separate with commas)" id="postTagsInput">
+                        <div class="create-post-tags" id="postTagsContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="modal" id="loadingModal" style="display: flex;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Dark Mode Toggle -->
+    <div class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon" id="darkModeIcon"></i>
+    </div>
+
+    <script>
+        // Current user data
+        // Current user data
+let currentUser = null;
+let posts = [];
+let stories = [];
+let suggestions = [];
+let notifications = [];
+let unreadNotifications = 0;
+let ws = null;
+let activeStoryIndex = 0;
+let activeStories = [];
+let storyInterval = null;
+let currentPostId = null;
+let nextCursor = null;
+let isLoadingMore = false;
+
+// DOM Elements
+const profilePic = document.getElementById('profilePic');
+const dropdownMenu = document.getElementById('dropdownMenu');
+const postsContainer = document.getElementById('postsContainer');
+const storiesContainer = document.getElementById('storiesContainer');
+const likesModal = document.getElementById('likesModal');
+const closeLikesModal = document.getElementById('closeLikesModal');
+const commentsModal = document.getElementById('commentsModal');
+const closeCommentsModal = document.getElementById('closeCommentsModal');
+const modalCommentInput = document.getElementById('modalCommentInput');
+const modalCommentPost = document.getElementById('modalCommentPost');
+const storyViewer = document.getElementById('storyViewer');
+const closeStoryViewer = document.getElementById('closeStoryViewer');
+const storyViewerMedia = document.getElementById('storyViewerMedia');
+const storyViewerVideo = document.getElementById('storyViewerVideo');
+const storyViewerUserPic = document.getElementById('storyViewerUserPic');
+const storyViewerUsername = document.getElementById('storyViewerUsername');
+const storyViewerTime = document.getElementById('storyViewerTime');
+const storyViewerPrev = document.getElementById('storyViewerPrev');
+const storyViewerNext = document.getElementById('storyViewerNext');
+const storyProgressContainer = document.getElementById('storyProgressContainer');
+const createPostModal = document.getElementById('createPostModal');
+const createPostNext1 = document.getElementById('createPostNext1');
+const createPostNext2 = document.getElementById('createPostNext2');
+const createPostNext3 = document.getElementById('createPostNext3');
+const selectFromComputer = document.getElementById('selectFromComputer');
+const postMediaInput = document.getElementById('postMediaInput');
+const createPostPreview = document.getElementById('createPostPreview');
+const createPostFinalPreview = document.getElementById('createPostFinalPreview');
+const postCaption = document.getElementById('postCaption');
+const postTagsInput = document.getElementById('postTagsInput');
+const postTagsContainer = document.getElementById('postTagsContainer');
+const notificationBadge = document.getElementById('notificationBadge');
+const notificationBadgeMobile = document.getElementById('notificationBadgeMobile');
+const loadingModal = document.getElementById('loadingModal');
+const darkModeToggle = document.getElementById('darkModeToggle');
+const darkModeIcon = document.getElementById('darkModeIcon');
+const modalPostContainer = document.getElementById('modalPostContainer');
+const likesList = document.getElementById('likesList');
+const commentsList = document.getElementById('commentsList');
+const suggestionsContainer = document.getElementById('suggestionsContainer');
+
+// Initialize the dashboard
+document.addEventListener('DOMContentLoaded', async () => {
+    showLoading();
+    await loadCurrentUser();
+    await loadInitialData();
+    setupEventListeners();
+    connectWebSocket();
+    setupInfiniteScroll();
+    hideLoading();
+});
+
+// Show loading spinner
+function showLoading() {
+    loadingModal.style.display = 'flex';
+}
+
+// Hide loading spinner
+function hideLoading() {
+    loadingModal.style.display = 'none';
+}
+
+// Connect to WebSocket
+function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const wsUrl = protocol + window.location.host + '/realtime';
+    
+    ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+        console.log('WebSocket connected');
+        // Send authentication if needed
+        if (currentUser) {
+            ws.send(JSON.stringify({
+                type: 'auth',
+                token: localStorage.getItem('token')
+            }));
+        }
+    };
+    
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleWebSocketMessage(data);
+    };
+    
+    ws.onclose = () => {
+        console.log('WebSocket disconnected. Reconnecting...');
+        setTimeout(connectWebSocket, 5000);
+    };
+    
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+}
+
+// Handle WebSocket messages
+function handleWebSocketMessage(data) {
+    switch (data.event) {
+        case 'new_post':
+            if (currentUser && data.data.userId !== currentUser.id) {
+                // Add to beginning of posts array
+                posts.unshift(data.data);
+                renderPosts();
+            }
+            break;
+            
+        case 'new_story':
+            if (currentUser && data.data.userId !== currentUser.id) {
+                // Add to stories array
+                const storyExists = stories.some(s => s.id === data.data.id);
+                if (!storyExists) {
+                    stories.push(data.data);
+                    renderStories();
+                }
+            }
+            break;
+            
+        case 'post_updated':
+            // Update the post in our array
+            const postIndex = posts.findIndex(p => p.id === data.data.id);
+            if (postIndex !== -1) {
+                posts[postIndex] = data.data;
+                renderPosts();
+            }
+            break;
+            
+        case 'new_comment':
+            // Update the post's comments count
+            const postIdx = posts.findIndex(p => p.id === data.data.postId);
+            if (postIdx !== -1) {
+                if (!posts[postIdx].comments.includes(data.data.id)) {
+                    posts[postIdx].comments.push(data.data.id);
+                }
+                renderPosts();
+            }
+            break;
+            
+        case 'new_notification':
+            if (currentUser && data.data.userId === currentUser.id) {
+                // Add notification and update badge
+                notifications.unshift(data.data.notification);
+                unreadNotifications++;
+                updateNotificationBadge();
+            }
+            break;
+            
+        case 'post_deleted':
+            // Remove the post from our array
+            posts = posts.filter(p => p.id !== data.data.postId);
+            renderPosts();
+            break;
+            
+        case 'story_deleted':
+            // Remove the story from our array
+            stories = stories.filter(s => s.id !== data.data.storyId);
+            renderStories();
+            break;
+            
+        case 'comment_deleted':
+            // Update the post's comments count
+            const pIdx = posts.findIndex(p => p.id === data.data.postId);
+            if (pIdx !== -1) {
+                posts[pIdx].comments = posts[pIdx].comments.filter(c => c !== data.data.commentId);
+                renderPosts();
+            }
+            break;
+    }
+}
+
+// Load current user data
+async function loadCurrentUser() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        const response = await fetch('/api/users/me', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load user');
+        
+        currentUser = await response.json();
+        profilePic.src = currentUser.profilePic || 'default-avatar.jpg';
+        
+        // Update sidebar
+        if (document.getElementById('sidebarProfilePic')) {
+            document.getElementById('sidebarProfilePic').src = currentUser.profilePic || 'default-avatar.jpg';
+            document.getElementById('sidebarUsername').textContent = currentUser.username;
+            document.getElementById('sidebarName').textContent = currentUser.name || currentUser.username;
+        }
+        
+        // Load notifications
+        await loadNotifications();
+    } catch (error) {
+        console.error('Error loading user:', error);
+        window.location.href = '/login.html';
+    }
+}
+
+// Load initial data
+async function loadInitialData() {
+    try {
+        await Promise.all([
+            loadPosts(),
+            loadStories(),
+            loadSuggestions()
+        ]);
+    } catch (error) {
+        console.error('Error loading initial data:', error);
+        alert('Failed to load data. Please refresh the page.');
+    }
+}
+
+// Load posts from API
+async function loadPosts() {
+    try {
+        const response = await fetch('/api/feed', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        const data = await response.json();
+        posts = data.posts;
+        nextCursor = data.nextCursor;
+        renderPosts();
+    } catch (error) {
+        console.error('Error loading posts:', error);
+        throw error;
+    }
+}
+
+// Load more posts for infinite scroll
+async function loadMorePosts() {
+    if (isLoadingMore || !nextCursor) return;
+    
+    isLoadingMore = true;
+    try {
+        const response = await fetch(`/api/feed?cursor=${nextCursor}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        const data = await response.json();
+        posts = [...posts, ...data.posts];
+        nextCursor = data.nextCursor;
+        renderPosts();
+    } catch (error) {
+        console.error('Error loading more posts:', error);
+    } finally {
+        isLoadingMore = false;
+    }
+}
+
+// Render posts to the DOM
+function renderPosts() {
+    postsContainer.innerHTML = '';
+    
+    posts.forEach(post => {
+        const postEl = document.createElement('div');
+        postEl.className = 'post';
+        
+        // Check if post is a video
+        const isVideo = post.mediaUrl.includes('.mp4') || post.mediaUrl.includes('.mov');
+        
+        postEl.innerHTML = `
+            <div class="post-header">
+                <img src="${post.user.profilePic || 'default-avatar.jpg'}" class="post-user-pic">
+                <span class="post-username">${post.user.username}</span>
+                <i class="fas fa-ellipsis-h post-more" onclick="showPostOptions('${post.id}')"></i>
+            </div>
+            ${isVideo ? `
+                <div class="post-video">
+                    <video src="${post.mediaUrl}" class="post-content" onclick="togglePlayPause(this)"></video>
+                    <div class="video-controls">
+                        <button class="video-control" onclick="toggleMute(this.parentElement.previousElementSibling)"><i class="fas fa-volume-mute"></i></button>
+                    </div>
+                </div>
+            ` : `
+                <img src="${post.mediaUrl}" class="post-content" onclick="viewMedia('${post.mediaUrl}', '${post.user.username}')">
+            `}
+            <div class="post-actions">
+                <i class="far fa-heart post-action ${post.likes.includes(currentUser.id) ? 'liked' : ''}" 
+                   data-post-id="${post.id}" onclick="toggleLike('${post.id}')"></i>
+                <i class="far fa-comment post-action" onclick="showCommentsModal('${post.id}')"></i>
+                <i class="far fa-paper-plane post-action"></i>
+                <i class="far fa-bookmark post-action post-action-save ${isPostSaved(post.id) ? 'saved' : ''}" 
+                   onclick="toggleSavePost('${post.id}')"></i>
+            </div>
+            <div class="post-likes" onclick="showLikes('${post.id}')">
+                ${post.likes.length} likes
+            </div>
+            <div class="post-caption">
+                <span class="post-username">${post.user.username}</span> ${post.caption}
+                ${post.tags && post.tags.length > 0 ? 
+                    post.tags.map(tag => `<span class="post-tags">#${tag}</span>`).join(' ') : ''}
+            </div>
+            <div class="post-comments" onclick="showCommentsModal('${post.id}')">
+                View all ${post.comments.length} comments
+            </div>
+            <div class="post-time">
+                ${formatTime(post.createdAt)}
+            </div>
+            <div class="comment-input-container">
+                <i class="far fa-smile comment-emoji" onclick="showEmojiPicker(this.nextElementSibling)"></i>
+                <input type="text" class="comment-input" placeholder="Add a comment..." 
+                       data-post-id="${post.id}" onkeypress="postComment(event, '${post.id}')">
+                <span class="comment-post" onclick="postCommentFromButton('${post.id}')">Post</span>
+            </div>
+        `;
+        postsContainer.appendChild(postEl);
+    });
+}
+
+// Check if post is saved
+function isPostSaved(postId) {
+    // This would need to be implemented with actual saved posts data
+    return false;
+}
+
+// Load stories from API
+async function loadStories() {
+    try {
+        const response = await fetch('/api/stories', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        stories = await response.json();
+        renderStories();
+    } catch (error) {
+        console.error('Error loading stories:', error);
+        throw error;
+    }
+}
+
+// Render stories to the DOM
+function renderStories() {
+    storiesContainer.innerHTML = '';
+    
+    // Add create story button first
+    const createStoryEl = document.createElement('div');
+    createStoryEl.className = 'story story-create';
+    createStoryEl.innerHTML = `
+        <i class="fas fa-plus story-create-icon"></i>
+        <div class="story-user">Your Story</div>
+    `;
+    createStoryEl.addEventListener('click', createStory);
+    storiesContainer.appendChild(createStoryEl);
+    
+    // Add other stories
+    stories.forEach(story => {
+        const storyEl = document.createElement('div');
+        storyEl.className = 'story';
+        storyEl.innerHTML = `
+            <img src="${story.user.profilePic || 'default-avatar.jpg'}" class="story-image">
+            <div class="story-user">${story.user.username}</div>
+        `;
+        storyEl.addEventListener('click', () => viewStory(story.id));
+        storiesContainer.appendChild(storyEl);
+    });
+}
+
+// Load user suggestions
+async function loadSuggestions() {
+    try {
+        const response = await fetch('/api/users/suggestions', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        suggestions = await response.json();
+        renderSuggestions();
+    } catch (error) {
+        console.error('Error loading suggestions:', error);
+        throw error;
+    }
+}
+
+// Render suggestions to the DOM
+function renderSuggestions() {
+    suggestionsContainer.innerHTML = '';
+    
+    suggestions.forEach(user => {
+        const userEl = document.createElement('div');
+        userEl.className = 'suggestion';
+        userEl.innerHTML = `
+            <img src="${user.profilePic || 'default-avatar.jpg'}" class="suggestion-pic">
+            <div class="suggestion-details">
+                <div class="suggestion-username">${user.username}</div>
+                <div class="suggestion-info">Suggested for you</div>
+            </div>
+            <div class="suggestion-follow" onclick="followUser('${user.id}', this)">Follow</div>
+        `;
+        suggestionsContainer.appendChild(userEl);
+    });
+}
+
+// Load notifications
+async function loadNotifications() {
+    try {
+        const response = await fetch('/api/notifications', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        notifications = await response.json();
+        unreadNotifications = notifications.filter(n => !n.read).length;
+        updateNotificationBadge();
+    } catch (error) {
+        console.error('Error loading notifications:', error);
+        throw error;
+    }
+}
+
+// Update notification badge
+function updateNotificationBadge() {
+    if (unreadNotifications > 0) {
+        notificationBadge.style.display = 'flex';
+        notificationBadge.textContent = unreadNotifications > 9 ? '9+' : unreadNotifications;
+        notificationBadgeMobile.style.display = 'flex';
+        notificationBadgeMobile.textContent = unreadNotifications > 9 ? '9+' : unreadNotifications;
+    } else {
+        notificationBadge.style.display = 'none';
+        notificationBadgeMobile.style.display = 'none';
+    }
+}
+
+// Toggle like on a post
+async function toggleLike(postId) {
+    try {
+        const response = await fetch(`/api/posts/${postId}/like`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to toggle like');
+        
+        const result = await response.json();
+        const postIndex = posts.findIndex(p => p.id === postId);
+        
+        if (postIndex !== -1) {
+            if (result.action === 'liked') {
+                posts[postIndex].likes.push(currentUser.id);
+            } else {
+                posts[postIndex].likes = posts[postIndex].likes.filter(id => id !== currentUser.id);
+            }
+            renderPosts();
+        }
+    } catch (error) {
+        console.error('Error toggling like:', error);
+    }
+}
+
+// Show likes modal
+async function showLikes(postId) {
+    try {
+        const response = await fetch(`/api/posts/${postId}/likes`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        const likes = await response.json();
+        
+        likesList.innerHTML = '';
+        
+        likes.forEach(user => {
+            const userEl = document.createElement('div');
+            userEl.className = 'modal-user';
+            userEl.innerHTML = `
+                <img src="${user.profilePic || 'default-avatar.jpg'}" class="modal-user-pic">
+                <div class="modal-user-username">${user.username}</div>
+                ${user.id !== currentUser.id ? `
+                    <div class="modal-user-follow" onclick="followUser('${user.id}', this)">
+                        ${isFollowing(user.id) ? 'Following' : 'Follow'}
+                    </div>
+                ` : ''}
+            `;
+            likesList.appendChild(userEl);
+        });
+        
+        likesModal.style.display = 'flex';
+    } catch (error) {
+        console.error('Error loading likes:', error);
+    }
+}
+
+// Check if following a user
+function isFollowing(userId) {
+    // This would need to be implemented with actual following data
+    return false;
+}
+
+// Follow a user
+async function followUser(userId, element) {
+    try {
+        const response = await fetch(`/api/users/${userId}/follow`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to follow user');
+        
+        const result = await response.json();
+        if (element) {
+            element.textContent = 'Following';
+            element.style.color = '#aaa';
+            element.onclick = null;
+        }
+    } catch (error) {
+        console.error('Error following user:', error);
+    }
+}
+
+// Show comments modal
+async function showCommentsModal(postId) {
+    currentPostId = postId;
+    
+    try {
+        // Get post details
+        const postResponse = await fetch(`/api/posts/${postId}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        const post = await postResponse.json();
+        
+        // Render post in modal
+        modalPostContainer.innerHTML = `
+            <div class="post-header">
+                <img src="${post.user.profilePic || 'default-avatar.jpg'}" class="post-user-pic">
+                <span class="post-username">${post.user.username}</span>
+                <i class="fas fa-ellipsis-h post-more" onclick="showPostOptions('${post.id}')"></i>
+            </div>
+            <img src="${post.mediaUrl}" class="post-content">
+            <div class="post-actions">
+                <i class="far fa-heart post-action ${post.likes.includes(currentUser.id) ? 'liked' : ''}" 
+                   data-post-id="${post.id}" onclick="toggleLike('${post.id}')"></i>
+                <i class="far fa-comment post-action"></i>
+                <i class="far fa-paper-plane post-action"></i>
+                <i class="far fa-bookmark post-action post-action-save"></i>
+            </div>
+            <div class="post-likes" onclick="showLikes('${post.id}')">
+                ${post.likes.length} likes
+            </div>
+            <div class="post-caption">
+                <span class="post-username">${post.user.username}</span> ${post.caption}
+            </div>
+            <div class="post-time">
+                ${formatTime(post.createdAt)}
+            </div>
+        `;
+        
+        // Get comments
+        const commentsResponse = await fetch(`/api/posts/${postId}/comments`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        const comments = await commentsResponse.json();
+        
+        // Render comments
+        commentsList.innerHTML = '';
+        comments.forEach(comment => {
+            const commentEl = document.createElement('div');
+            commentEl.className = 'modal-user';
+            commentEl.innerHTML = `
+                <img src="${comment.user.profilePic || 'default-avatar.jpg'}" class="modal-user-pic">
+                <div class="modal-user-username">
+                    <span style="font-weight: 600;">${comment.user.username}</span> ${comment.text}
+                </div>
+                <i class="far fa-heart"></i>
+            `;
+            commentsList.appendChild(commentEl);
+        });
+        
+        commentsModal.style.display = 'flex';
+        modalCommentInput.focus();
+    } catch (error) {
+        console.error('Error loading comments:', error);
+    }
+}
+
+// Post a comment
+async function postComment(event, postId) {
+    if (event.key === 'Enter') {
+        const input = event.target;
+        const text = input.value.trim();
+        
+        if (text) {
+            try {
+                const response = await fetch(`/api/posts/${postId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ text })
+                });
+                
+                if (!response.ok) throw new Error('Failed to post comment');
+                
+                const newComment = await response.json();
+                const postIndex = posts.findIndex(p => p.id === postId);
+                
+                if (postIndex !== -1) {
+                    posts[postIndex].comments.push(newComment.id);
+                    renderPosts();
+                }
+                
+                // Clear input
+                input.value = '';
+                
+                // If in comments modal, add the new comment to the list
+                if (currentPostId === postId) {
+                    const commentEl = document.createElement('div');
+                    commentEl.className = 'modal-user';
+                    commentEl.innerHTML = `
+                        <img src="${currentUser.profilePic || 'default-avatar.jpg'}" class="modal-user-pic">
+                        <div class="modal-user-username">
+                            <span style="font-weight: 600;">${currentUser.username}</span> ${text}
+                        </div>
+                        <i class="far fa-heart"></i>
+                    `;
+                    commentsList.appendChild(commentEl);
+                }
+            } catch (error) {
+                console.error('Error posting comment:', error);
+            }
+        }
+    }
+}
+
+// Post comment from button click
+async function postCommentFromButton(postId) {
+    const input = document.querySelector(`.comment-input[data-post-id="${postId}"]`);
+    const event = { key: 'Enter', target: input };
+    await postComment(event, postId);
+}
+
+// Toggle save post
+async function toggleSavePost(postId) {
+    try {
+        const response = await fetch(`/api/posts/${postId}/save`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to save post');
+        
+        const result = await response.json();
+        const saveButtons = document.querySelectorAll(`.post-action-save[onclick="toggleSavePost('${postId}')"]`);
+        
+        saveButtons.forEach(button => {
+            if (result.saved) {
+                button.classList.add('saved');
+                button.innerHTML = '<i class="fas fa-bookmark"></i>';
+            } else {
+                button.classList.remove('saved');
+                button.innerHTML = '<i class="far fa-bookmark"></i>';
+            }
+        });
+    } catch (error) {
+        console.error('Error saving post:', error);
+    }
+}
+
+// View story
+async function viewStory(storyId) {
+    try {
+        // Get all stories from the same user
+        const response = await fetch('/api/stories', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        const allStories = await response.json();
+        
+        // Find the current story
+        const storyIndex = allStories.findIndex(s => s.id === storyId);
+        if (storyIndex === -1) {
+            throw new Error('Story not found');
+        }
+        
+        // Set active stories and index
+        activeStories = allStories.filter(s => s.userId === allStories[storyIndex].userId);
+        activeStoryIndex = activeStories.findIndex(s => s.id === storyId);
+        
+        // Show the story viewer
+        showStoryViewer();
+    } catch (error) {
+        console.error('Error viewing story:', error);
+    }
+}
+
+// Show story viewer
+function showStoryViewer() {
+    if (activeStories.length === 0) return;
+    
+    const story = activeStories[activeStoryIndex];
+    const isVideo = story.mediaUrl.includes('.mp4') || story.mediaUrl.includes('.mov');
+    
+    // Set user info
+    storyViewerUserPic.src = story.user.profilePic || 'default-avatar.jpg';
+    storyViewerUsername.textContent = story.user.username;
+    storyViewerTime.textContent = formatTime(story.createdAt);
+    
+    // Set media
+    if (isVideo) {
+        storyViewerMedia.style.display = 'none';
+        storyViewerVideo.style.display = 'block';
+        storyViewerVideo.src = story.mediaUrl;
+        storyViewerVideo.muted = true;
+        storyViewerVideo.play();
+    } else {
+        storyViewerVideo.style.display = 'none';
+        storyViewerMedia.style.display = 'block';
+        storyViewerMedia.src = story.mediaUrl;
+    }
+    
+    // Create progress bars
+    storyProgressContainer.innerHTML = '';
+    activeStories.forEach((s, i) => {
+        const progressBar = document.createElement('div');
+        progressBar.className = 'story-progress';
+        progressBar.innerHTML = '<div class="story-progress-bar"></div>';
+        storyProgressContainer.appendChild(progressBar);
+    });
+    
+    // Start progress
+    startStoryProgress();
+    
+    // Show the viewer
+    storyViewer.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// Start story progress
+function startStoryProgress() {
+    // Clear any existing interval
+    if (storyInterval) {
+        clearInterval(storyInterval);
+    }
+    
+    // Reset all progress bars
+    const progressBars = storyProgressContainer.querySelectorAll('.story-progress-bar');
+    progressBars.forEach(bar => {
+        bar.style.width = '0%';
+    });
+    
+    // Start current story progress
+    const currentProgressBar = progressBars[activeStoryIndex];
+    let width = 0;
+    const duration = 5000; // 5 seconds per story
+    
+    storyInterval = setInterval(() => {
+        if (width >= 100) {
+            nextStory();
+            return;
+        }
+        
+        width += 100 / (duration / 100);
+        currentProgressBar.style.width = `${width}%`;
+    }, 100);
+}
+
+// Next story
+function nextStory() {
+    if (activeStoryIndex < activeStories.length - 1) {
+        activeStoryIndex++;
+        showStoryViewer();
+    } else {
+        closeStoryViewer();
+    }
+}
+
+// Previous story
+function prevStory() {
+    if (activeStoryIndex > 0) {
+        activeStoryIndex--;
+        showStoryViewer();
+    }
+}
+
+// Close story viewer
+function closeStoryViewer() {
+    if (storyInterval) {
+        clearInterval(storyInterval);
+        storyInterval = null;
+    }
+    
+    if (storyViewerVideo) {
+        storyViewerVideo.pause();
+        storyViewerVideo.currentTime = 0;
+    }
+    
+    storyViewer.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Create story
+function createStory() {
+    alert('Story creation would open here in a real implementation');
+}
+
+// Show post options
+function showPostOptions(postId) {
+    alert(`Options for post ${postId} would show here`);
+}
+
+// Toggle video play/pause
+function togglePlayPause(video) {
+    if (video.paused) {
+        video.play();
+    } else {
+        video.pause();
+    }
+}
+
+// Toggle video mute
+function toggleMute(video) {
+    video.muted = !video.muted;
+}
+
+// View media in full screen
+function viewMedia(mediaUrl, username) {
+    alert(`Media ${mediaUrl} by ${username} would open in full screen`);
+}
+
+// Show emoji picker
+function showEmojiPicker(input) {
+    alert('Emoji picker would open here');
+}
+
+// Format time
+function formatTime(timestamp) {
+    const now = new Date();
+    const postTime = new Date(timestamp);
+    const diff = now - postTime;
+    
+    const seconds = Math.floor(diff / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks}w ago`;
+    
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    
+    const years = Math.floor(days / 365);
+    return `${years}y ago`;
+}
+
+// Setup infinite scroll
+function setupInfiniteScroll() {
+    window.addEventListener('scroll', () => {
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+            loadMorePosts();
+        }
+    });
+}
+
+// Navigation functions
+function goToProfile() {
+    window.location.href = '/profile.html';
+}
+
+function goToSaved() {
+    window.location.href = '/saved.html';
+}
+
+function goToSettings() {
+    window.location.href = '/settings.html';
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    window.location.href = '/login.html';
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Profile dropdown
+    profilePic.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', () => {
+        dropdownMenu.classList.remove('show');
+    });
+
+    // Close likes modal
+    closeLikesModal.addEventListener('click', () => {
+        likesModal.style.display = 'none';
+    });
+
+    // Close comments modal
+    closeCommentsModal.addEventListener('click', () => {
+        commentsModal.style.display = 'none';
+    });
+
+    // Post comment in modal
+    modalCommentPost.addEventListener('click', async () => {
+        const text = modalCommentInput.value.trim();
+        if (text && currentPostId) {
+            await postComment({ key: 'Enter', target: modalCommentInput }, currentPostId);
+        }
+    });
+
+    // Story viewer controls
+    closeStoryViewer.addEventListener('click', closeStoryViewer);
+    storyViewerPrev.addEventListener('click', prevStory);
+    storyViewerNext.addEventListener('click', nextStory);
+
+    // Create post modal
+    document.getElementById('createBtn').addEventListener('click', () => {
+        createPostModal.style.display = 'flex';
+    });
+
+    document.getElementById('createBtnMobile').addEventListener('click', () => {
+        createPostModal.style.display = 'flex';
+    });
+
+    // Create post steps
+    createPostNext1.addEventListener('click', () => {
+        document.getElementById('createPostStep1').classList.remove('active');
+        document.getElementById('createPostStep2').classList.add('active');
+    });
+
+    createPostNext2.addEventListener('click', () => {
+        document.getElementById('createPostStep2').classList.remove('active');
+        document.getElementById('createPostStep3').classList.add('active');
+    });
+
+    createPostNext3.addEventListener('click', async () => {
+        await createPost();
+    });
+
+    // Select media for post
+    selectFromComputer.addEventListener('click', () => {
+        postMediaInput.click();
+    });
+
+    postMediaInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                createPostPreview.src = event.target.result;
+                createPostFinalPreview.src = event.target.result;
+                document.getElementById('createPostStep1').classList.remove('active');
+                document.getElementById('createPostStep2').classList.add('active');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Handle tags input
+    postTagsInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const tag = postTagsInput.value.trim();
+            if (tag) {
+                addTag(tag);
+                postTagsInput.value = '';
+            }
+        }
+    });
+
+    // Dark mode toggle
+    darkModeToggle.addEventListener('click', toggleDarkMode);
+}
+
+// Add tag to post
+function addTag(tag) {
+    const tagEl = document.createElement('div');
+    tagEl.className = 'create-post-tag';
+    tagEl.innerHTML = `
+        ${tag} <i class="fas fa-times create-post-tag-remove" onclick="this.parentElement.remove()"></i>
+    `;
+    postTagsContainer.appendChild(tagEl);
+}
+
+// Create post
+async function createPost() {
+    const caption = postCaption.value.trim();
+    const tags = Array.from(postTagsContainer.children).map(el => el.textContent.trim().replace('×', '').trim());
+    
+    try {
+        const formData = new FormData();
+        formData.append('caption', caption);
+        formData.append('tags', tags.join(','));
+        formData.append('media', postMediaInput.files[0]);
+        
+        const response = await fetch('/api/posts', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: formData
+        });
+        
+        if (!response.ok) throw new Error('Failed to create post');
+        
+        const newPost = await response.json();
+        posts.unshift(newPost);
+        renderPosts();
+        
+        // Reset form
+        postCaption.value = '';
+        postTagsContainer.innerHTML = '';
+        postMediaInput.value = '';
+        createPostModal.style.display = 'none';
+        document.getElementById('createPostStep3').classList.remove('active');
+        document.getElementById('createPostStep1').classList.add('active');
+    } catch (error) {
+        console.error('Error creating post:', error);
+        alert('Failed to create post');
+    }
+}
+
+// Toggle dark mode
+function toggleDarkMode() {
+    document.body.classList.toggle('light-mode');
+    if (document.body.classList.contains('light-mode')) {
+        darkModeIcon.classList.remove('fa-moon');
+        darkModeIcon.classList.add('fa-sun');
+    } else {
+        darkModeIcon.classList.remove('fa-sun');
+        darkModeIcon.classList.add('fa-moon');
+    }
+}
+</script>
+</body>
+</html>
