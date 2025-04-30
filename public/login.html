@@ -263,10 +263,6 @@
                     id="username" 
                     name="username" 
                     placeholder="Username" 
-                    minlength="3" 
-                    maxlength="30"
-                    pattern="[a-zA-Z0-9_]+"
-                    title="Username must be 3-30 characters (letters, numbers, underscore)"
                     required
                     autocomplete="username"
                 >
@@ -279,7 +275,6 @@
                     id="password" 
                     name="password" 
                     placeholder="Password" 
-                    minlength="8"
                     required
                     autocomplete="current-password"
                 >
@@ -302,7 +297,7 @@
             <div class="auth-links">
                 <a href="#" id="forgotPassword">Forgot Password?</a>
                 <span>•</span>
-                <a href="reg.html">Create Account</a>
+                <a href="register.html">Create Account</a>
             </div>
         </form>
     </div>
@@ -311,147 +306,102 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Check for existing valid session
-            checkExistingSession();
-            
+            // Enhanced session check
+            const validateToken = (token) => {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    return payload.exp * 1000 > Date.now();
+                } catch (e) {
+                    return false;
+                }
+            };
+
+            const token = localStorage.getItem('token');
+            if (token && validateToken(token)) {
+                fetch('/api/users/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).then(response => {
+                    if (response.ok) window.location.href = '/dashboard.html';
+                    else localStorage.removeItem('token');
+                });
+            }
+
+            // Form handling
             const form = document.getElementById('loginForm');
             const submitBtn = document.getElementById('submitBtn');
             const toast = document.getElementById('toast');
             const forgotPasswordLink = document.getElementById('forgotPassword');
-            
-            // Form submission handler
+
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const username = document.getElementById('username').value.trim();
                 const password = document.getElementById('password').value;
-                
-                // Client-side validation
-                if (!validateInputs(username, password)) return;
-                
+
                 try {
-                    // Show loading state
                     submitBtn.classList.add('loading');
                     submitBtn.disabled = true;
-                    
+
                     const response = await fetch('/api/login', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username, password })
                     });
 
                     const data = await response.json();
                     
                     if (!response.ok) {
-                        // Handle specific error cases
-                        if (response.status === 401) {
-                            throw new Error('Invalid username or password');
-                        } else if (response.status === 403) {
-                            if (data.error.includes('verified')) {
-                                throw new Error('Account not verified. Please check your email.');
-                            } else {
-                                throw new Error('Account suspended. Contact support.');
-                            }
-                        }
-                        throw new Error(data.error || 'Login failed. Please try again.');
+                        const errorMap = {
+                            400: data.error || 'Validation failed',
+                            401: 'Invalid credentials',
+                            403: 'Account suspended',
+                            500: 'Server error'
+                        };
+                        throw new Error(errorMap[response.status] || 'Login failed');
                     }
 
-                    // Store token and user data
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    // Set authorization header for future requests
-                    if (window.axios) {
-                        axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-                    }
-                    
                     showToast('Login successful! Redirecting...', 'success');
-                    setTimeout(() => {
-                        window.location.href = '/dashboard.html';
-                    }, 1500);
+                    setTimeout(() => window.location.href = '/dashboard.html', 1500);
                 } catch (error) {
-                    console.error('Login error:', error);
                     showToast(error.message, 'error');
                 } finally {
                     submitBtn.classList.remove('loading');
                     submitBtn.disabled = false;
                 }
             });
-            
-            // Forgot password handler
+
+            // Forgot password flow
             forgotPasswordLink.addEventListener('click', async (e) => {
                 e.preventDefault();
-                const username = document.getElementById('username').value.trim();
-                
-                if (!username) {
-                    showToast('Please enter your username first', 'error');
-                    document.getElementById('username').focus();
-                    return;
-                }
-                
+                const email = prompt('Please enter your registered email:');
+                if (!email) return;
+
                 try {
-                    showToast('Sending password reset link...');
+                    showToast('Sending reset instructions...');
                     const response = await fetch('/api/forgot-password', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username })
+                        body: JSON.stringify({ email })
                     });
-                    
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.error || 'Failed to send reset link');
-                    
-                    showToast('Password reset link sent to your email', 'success');
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to send reset email');
+                    }
+
+                    showToast('Password reset instructions sent to your email', 'success');
                 } catch (error) {
                     showToast(error.message, 'error');
                 }
             });
-            
-            // Input validation function
-            function validateInputs(username, password) {
-                if (username.length < 3 || username.length > 30) {
-                    showToast('Username must be 3-30 characters', 'error');
-                    return false;
-                }
-                
-                if (password.length < 8) {
-                    showToast('Password must be at least 8 characters', 'error');
-                    return false;
-                }
-                
-                return true;
-            }
-            
-            // Toast notification function
+
+            // Utility functions
             function showToast(message, type = '') {
                 toast.textContent = message;
-                toast.className = 'toast';
-                if (type) toast.classList.add(type);
+                toast.className = `toast ${type}`;
                 toast.style.display = 'block';
-                
-                setTimeout(() => {
-                    toast.style.display = 'none';
-                }, 3000);
-            }
-            
-            // Check for existing valid session
-            function checkExistingSession() {
-                const token = localStorage.getItem('token');
-                if (!token) return;
-                
-                try {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    if (payload.exp * 1000 > Date.now()) {
-                        window.location.href = '/dashboard.html';
-                    } else {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
-                    }
-                } catch (e) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                }
+                setTimeout(() => toast.style.display = 'none', 3000);
             }
         });
     </script>
