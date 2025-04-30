@@ -19,7 +19,7 @@ const validator = require('validator');
 const { body, validationResult } = require('express-validator');
 
 const ENV_VARS = [
-  'JWT_SECRET', 'CATBOX_API_KEY', 'EMAIL_USER', 'EMAIL_PASSWORD',
+  'JWT_SECRET', 'CATBOX_API_KEY',
   'ADMIN_SECRET_KEY', 'CORS_ORIGIN', 'GOOGLE_OAUTH_URL', 'FB_OAUTH_URL',
   'OAUTH_CLIENT_ID'
 ];
@@ -191,24 +191,11 @@ async function createNotification(userId, type, data) {
   broadcast('new_notification', { userId, notification: notifications[notificationId] });
 }
 
-async function updateHashtagUsage(tag) {
-  const tags = await readData('tags.json');
-  tags[tag] = (tags[tag] || 0) + 1;
-  await writeData('tags.json', tags);
-}
-
-async function trackPostView(postId) {
-  const analytics = await readData('analytics.json');
-  analytics.posts[postId] = analytics.posts[postId] || { views: 0, shares: 0 };
-  analytics.posts[postId].views++;
-  await writeData('analytics.json', analytics);
-}
-
 // Authentication Routes
-app.post('/api/register', 
+app.post('/api/register',
   upload.single('profilePic'),
   [
-    body('username').isLength({ min: 3, max: 30 }).trim().escape(),
+    body('username').isLength({ min: 3, max: 30 }).matches(/^[a-zA-Z0-9_]+$/).withMessage('Invalid username format'),
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 8 }),
     body('age').isInt({ min: 13 })
@@ -216,150 +203,124 @@ app.post('/api/register',
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
+    
     try {
       const { username, email, password, age } = req.body;
       const users = await readData('users.json');
-
+      
+      // Check existing users
       if (Object.values(users).some(u => u.username === username)) {
-        return res.status(400).json({ error: 'Username already exists' });
+        return res.status(409).json({ error: 'Username already exists' });
       }
-
       if (Object.values(users).some(u => u.email === email)) {
-        return res.status(400).json({ error: 'Email already exists' });
+        return res.status(409).json({ error: 'Email already exists' });
       }
-
+      
+      // Handle profile picture upload
+      let profilePic = null;
+      if (req.file) {
+        try {
+          profilePic = await uploadToCatbox(req.file);
+        } catch (uploadError) {
+          console.error('Catbox upload failed:', uploadError);
+          return res.status(500).json({ error: 'Profile picture upload failed' });
+        }
+      }
+      
+      // Create new user
       const userId = uuidv4();
-      const profilePic = req.file ? await uploadToCatbox(req.file) : null;
-
+      const hashedPassword = await bcrypt.hash(password, 12);
+      
       users[userId] = {
         id: userId,
         username,
         email,
-        password: await bcrypt.hash(password, 12),
+        password: hashedPassword,
         age: parseInt(age),
         profilePic,
-        verified: false,
         role: CONFIG.ROLES.USER,
         followers: [],
         following: [],
         createdAt: new Date().toISOString(),
         isActive: true
       };
-
-      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-      await sendVerificationEmail(email, username, verificationCode);
+      
       await writeData('users.json', users);
-
-      res.status(201).json({ 
-        message: 'Registration successful - verification email sent',
-        userId 
+      
+      // Generate JWT token
+      const token = jwt.sign({
+        id: userId,
+        username,
+        role: CONFIG.ROLES.USER
+      }, CONFIG.JWT_SECRET, { expiresIn: '24h' });
+      
+      res.status(201).json({
+        token,
+        user: {
+          id: userId,
+          username,
+          email,
+          profilePic,
+          role: CONFIG.ROLES.USER,
+          createdAt: users[userId].createdAt
+        }
       });
+      
     } catch (error) {
+      console.error('Registration error:', error);
       res.status(500).json({ error: 'Registration failed' });
     }
-});
+  });
 
-app.post('/api/login', 
+app.post('/api/login',
   [
-    body('username').trim().escape(),
-    body('password').notEmpty()
+    body('username')
+    .trim()
+    .escape()
+    .isLength({ min: 3, max: 30 })
+    .withMessage('Username must be 3-30 characters')
+    .matches(/^[a-zA-Z0-9_]+$/)
+    .withMessage('Invalid username format'),
+    body('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters')
   ],
   async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
+    if (!errors.isEmpty()) {
+      const firstError = errors.array()[0];
+      return res.status(400).json({ error: firstError.msg });
+    }
+    
     try {
       const { username, password } = req.body;
       const users = await readData('users.json');
       const user = Object.values(users).find(u => u.username === username);
-
+      
       if (!user || !(await bcrypt.compare(password, user.password))) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
-
-      if (!user.verified) {
-        return res.status(403).json({ error: 'Account not verified' });
-      }
-
+      
       if (!user.isActive) {
         return res.status(403).json({ error: 'Account suspended' });
       }
-
-      const token = jwt.sign({ 
-        id: user.id, 
+      
+      const token = jwt.sign({
+        id: user.id,
         username: user.username,
         role: user.role
       }, CONFIG.JWT_SECRET, { expiresIn: '24h' });
       
-      res.json({ 
-        token, 
-        user: (({ password, verificationCode, ...rest }) => rest)(user) 
+      res.json({
+        token,
+        user: (({ password, ...rest }) => rest)(user)
       });
     } catch (error) {
+      console.error('Login error:', error);
       res.status(500).json({ error: 'Login failed' });
     }
-});
+  });
 
-// Verification Routes
-app.post('/api/verify', 
-  [
-    body('email').isEmail().normalizeEmail(),
-    body('code').isLength({ min: 6, max: 6 })
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
-    try {
-      const { email, code } = req.body;
-      const users = await readData('users.json');
-      const user = Object.values(users).find(u => u.email === email);
-
-      if (!user) return res.status(404).json({ error: 'User not found' });
-      if (user.verified) return res.status(400).json({ error: 'Account already verified' });
-      if (user.verificationCode !== code) return res.status(400).json({ error: 'Invalid verification code' });
-
-      user.verified = true;
-      delete user.verificationCode;
-      await writeData('users.json', users);
-      res.json({ message: 'Account verified successfully' });
-    } catch (error) {
-      res.status(500).json({ error: 'Verification failed' });
-    }
-});
-
-app.post('/api/resend-verification', 
-  [
-    body('email').isEmail().normalizeEmail()
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
-    try {
-      const { email } = req.body;
-      const users = await readData('users.json');
-      const user = Object.values(users).find(u => u.email === email);
-
-      if (!user) return res.status(404).json({ error: 'User not found' });
-      if (user.verified) return res.status(400).json({ error: 'Account already verified' });
-
-      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-      user.verificationCode = verificationCode;
-      
-      await Promise.all([
-        sendVerificationEmail(email, user.username, verificationCode),
-        writeData('users.json', users)
-      ]);
-
-      res.json({ message: 'Verification email resent' });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to resend verification' });
-    }
-});
-
-// Password Recovery Routes
 app.post('/api/forgot-password', 
   [
     body('email').isEmail().normalizeEmail()
@@ -378,10 +339,7 @@ app.post('/api/forgot-password',
       const resetToken = jwt.sign({ id: user.id }, CONFIG.JWT_SECRET, { expiresIn: '1h' });
       user.resetToken = resetToken;
       
-      await Promise.all([
-        sendPasswordResetEmail(email, user.username, resetToken),
-        writeData('users.json', users)
-      ]);
+      await writeData('users.json', users);
 
       res.json({ message: 'Password reset email sent' });
     } catch (error) {
@@ -425,7 +383,6 @@ app.post('/api/reset-password',
     }
 });
 
-// User Profile Routes
 app.get('/api/users/:userId', authenticate, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -1896,6 +1853,7 @@ app.delete('/api/developer/apps/:appId', authenticate, async (req, res) => {
   }
 });
 
+
 // Health Check
 app.get('/api/health', (req, res) => {
   const health = {
@@ -1934,9 +1892,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Catch-all route for client-side routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
+
 
 // Cron Jobs
 cron.schedule('0 * * * *', async () => {
