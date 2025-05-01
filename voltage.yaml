@@ -3,15 +3,18 @@ services:
     name: voltura
     runtime: node
     buildCommand: npm install
-    startCommand: node server.js
+    startCommand: npm start
+    env: node
     envVars:
       - key: JWT_SECRET
-        generateValue: true
-      - key: CORS_ORIGIN
-        value: https://localhost:3000
+        value: LostboyHighVoltagePoweredByVoltura92
+      - key: CATBOX_API_KEY
+        value: 7ba39a095e911ff44d11c2229
       - key: ADMIN_SECRET_KEY
-        generateValue: true
-    disk:
-      name: data
-      mountPath: /data
-      sizeGB: 1
+        value: LostboyHighVoltagePoweredByVoltura92
+      - key: CORS_ORIGIN
+        value: https://test1-vycg.onrender.com
+      - key: PORT
+        value: 3000
+      - key: DATA_DIR
+        value: /data
