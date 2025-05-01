@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Viewer - Voltura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-purple: #bc13fe;
+            --dark-bg: #0a0a0f;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: white;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .story-container {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .story-media {
+            max-width: 100%;
+            max-height: 100vh;
+            object-fit: contain;
+        }
+
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            border: none;
+            color: white;
+            padding: 1rem;
+            cursor: pointer;
+            font-size: 2rem;
+        }
+
+        .prev { left: 1rem; }
+        .next { right: 1rem; }
+
+        .progress-bar {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            height: 3px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--neon-purple);
+            transition: width 0.1s linear;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 2rem;
+            left: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--neon-purple);
+        }
+    </style>
+</head>
+<body>
+    <div class="story-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <div class="user-info">
+            <img src="" class="user-avatar" id="storyAvatar">
+            <span id="storyUsername"></span>
+        </div>
+
+        <button class="nav-button prev" onclick="previousStory()"><i class="fas fa-chevron-left"></i></button>
+        <button class="nav-button next" onclick="nextStory()"><i class="fas fa-chevron-right"></i></button>
+        
+        <img class="story-media" id="imageStory" style="display: none;">
+        <video class="story-media" id="videoStory" controls style="display: none;"></video>
+    </div>
+
+    <script>
+        let stories = [];
+        let currentStoryIndex = 0;
+        let progressInterval;
+
+        async function loadStories() {
+            try {
+                const response = await fetch('/api/stories', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt')}` }
+                });
+                stories = await response.json();
+                if (stories.length === 0) window.location.href = '/dashboard.html';
+                showStory(currentStoryIndex);
+            } catch (error) {
+                console.error('Error loading stories:', error);
+            }
+        }
+
+        function showStory(index) {
+            const story = stories[index];
+            const isVideo = story.mediaUrl.includes('.mp4');
+            
+            document.getElementById('imageStory').style.display = isVideo ? 'none' : 'block';
+            document.getElementById('videoStory').style.display = isVideo ? 'block' : 'none';
+            
+            if (isVideo) {
+                const video = document.getElementById('videoStory');
+                video.src = story.mediaUrl;
+                video.play();
+            } else {
+                document.getElementById('imageStory').src = story.mediaUrl;
+            }
+
+            document.getElementById('storyAvatar').src = story.user.profilePic;
+            document.getElementById('storyUsername').textContent = story.user.username;
+
+            startProgressTimer();
+        }
+
+        function startProgressTimer() {
+            clearInterval(progressInterval);
+            const progressBar = document.getElementById('progress');
+            progressBar.style.width = '0%';
+            
+            let width = 0;
+            progressInterval = setInterval(() => {
+                width += 1;
+                progressBar.style.width = `${width}%`;
+                if (width >= 100) nextStory();
+            }, 50);
+        }
+
+        function nextStory() {
+            currentStoryIndex = (currentStoryIndex + 1) % stories.length;
+            showStory(currentStoryIndex);
+        }
+
+        function previousStory() {
+            currentStoryIndex = (currentStoryIndex - 1 + stories.length) % stories.length;
+            showStory(currentStoryIndex);
+        }
+
+        loadStories();
+    </script>
+</body>
+</html>
