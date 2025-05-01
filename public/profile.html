@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voltura - Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-purple: #bc13fe;
+            --dark-bg: #0a0a0f;
+            --card-bg: #1a1a2f;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', system-ui;
+            margin: 0;
+        }
+
+        .profile-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .profile-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 3px solid var(--neon-purple);
+            object-fit: cover;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 2rem;
+            margin: 1rem 0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .edit-profile-form {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            border: 1px solid var(--neon-purple);
+            margin: 2rem 0;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--dark-bg);
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: white;
+            margin-top: 0.5rem;
+        }
+
+        button {
+            background: var(--neon-purple);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .user-posts {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .post-thumbnail {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            <img src="" alt="Profile" class="profile-avatar" id="profileAvatar">
+            <div>
+                <h1 id="username"></h1>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span id="postCount">0</span> posts
+                    </div>
+                    <div class="stat-item">
+                        <span id="followerCount">0</span> followers
+                    </div>
+                    <div class="stat-item">
+                        <span id="followingCount">0</span> following
+                    </div>
+                </div>
+                <p id="bio"></p>
+                <a id="website" target="_blank" style="color: var(--neon-purple);"></a>
+            </div>
+        </div>
+
+        <div class="edit-profile-form">
+            <h2>Edit Profile</h2>
+            <form id="editForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="editUsername" required>
+                </div>
+                <div class="form-group">
+                    <label>Bio</label>
+                    <textarea id="editBio" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Website</label>
+                    <input type="url" id="editWebsite">
+                </div>
+                <div class="form-group">
+                    <label>Profile Picture</label>
+                    <input type="file" id="editAvatar" accept="image/*">
+                </div>
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
+
+        <h2>Your Posts</h2>
+        <div class="user-posts" id="userPosts"></div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        async function loadProfile() {
+            try {
+                const token = localStorage.getItem('jwt');
+                if (!token) window.location.href = '/login.html';
+
+                const [userRes, postsRes] = await Promise.all([
+                    fetch(`/api/users/${currentUser.id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch(`/api/users/${currentUser.id}/posts`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                ]);
+
+                const user = await userRes.json();
+                const posts = await postsRes.json();
+
+                document.getElementById('username').textContent = user.username;
+                document.getElementById('bio').textContent = user.bio || 'No bio yet';
+                document.getElementById('website').textContent = user.website || '';
+                document.getElementById('website').href = user.website || '#';
+                document.getElementById('profileAvatar').src = user.profilePic || '/default-avatar.jpg';
+                document.getElementById('editUsername').value = user.username;
+                document.getElementById('editBio').value = user.bio || '';
+                document.getElementById('editWebsite').value = user.website || '';
+                
+                document.getElementById('postCount').textContent = posts.posts.length;
+                document.getElementById('followerCount').textContent = user.followers.length;
+                document.getElementById('followingCount').textContent = user.following.length;
+
+                const postsContainer = document.getElementById('userPosts');
+                postsContainer.innerHTML = posts.posts.map(post => `
+                    <img src="${post.mediaUrl}" class="post-thumbnail" onclick="location.href='/post/${post.id}'">
+                `).join('');
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('username', document.getElementById('editUsername').value);
+            formData.append('bio', document.getElementById('editBio').value);
+            formData.append('website', document.getElementById('editWebsite').value);
+            
+            const avatarFile = document.getElementById('editAvatar').files[0];
+            if (avatarFile) formData.append('profilePic', avatarFile);
+
+            try {
+                const response = await fetch(`/api/users/${currentUser.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt')}` },
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Update failed');
+                loadProfile();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Get current user from JWT
+        (async () => {
+            const token = localStorage.getItem('jwt');
+            if (!token) window.location.href = '/login.html';
+            
+            const { id } = jwt_decode(token);
+            currentUser = { id };
+            loadProfile();
+        })();
+    </script>
+</body>
+</html>
