@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Voltura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-purple: #bc13fe;
+            --dark-bg: #0a0a0f;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', system-ui;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .error-container {
+            padding: 2rem;
+            max-width: 600px;
+        }
+
+        .error-code {
+            font-size: 5rem;
+            color: var(--neon-purple);
+            margin: 0;
+        }
+
+        .error-message {
+            font-size: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .home-link {
+            color: var(--neon-purple);
+            text-decoration: none;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1 class="error-code" id="errorCode">404</h1>
+        <p class="error-message" id="errorMessage">Page Not Found</p>
+        <a href="/dashboard.html" class="home-link">
+            <i class="fas fa-arrow-left"></i> Return to Dashboard
+        </a>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        document.getElementById('errorCode').textContent = urlParams.get('code') || '404';
+        document.getElementById('errorMessage').textContent = 
+            decodeURIComponent(urlParams.get('message')) || 'Page Not Found';
+    </script>
+</body>
+</html>
