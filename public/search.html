@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search - Voltura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-purple: #bc13fe;
+            --dark-bg: #0a0a0f;
+            --card-bg: #1a1a2f;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', system-ui;
+            margin: 0;
+        }
+
+        .search-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        input[type="search"] {
+            width: 100%;
+            padding: 1rem;
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 25px;
+            color: white;
+            padding-left: 3rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .search-results {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .user-card {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--neon-purple);
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .follow-btn {
+            background: var(--neon-purple);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <div class="search-box">
+            <i class="fas fa-search search-icon"></i>
+            <input type="search" placeholder="Search users..." id="searchInput">
+        </div>
+        
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchUsers, 300);
+        });
+
+        async function searchUsers() {
+            const query = searchInput.value.trim();
+            if (query.length < 3) {
+                document.getElementById('searchResults').innerHTML = '';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin/users?search=${query}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt')}` }
+                });
+                const { users } = await response.json();
+                
+                const resultsContainer = document.getElementById('searchResults');
+                resultsContainer.innerHTML = users.map(user => `
+                    <div class="user-card">
+                        <img src="${user.profilePic || '/default-avatar.jpg'}" class="user-avatar">
+                        <div class="user-info">
+                            <h3>${user.username}</h3>
+                            <p>${user.bio || ''}</p>
+                        </div>
+                        <button class="follow-btn" onclick="followUser('${user.id}')">
+                            Follow
+                        </button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }
+
+        async function followUser(userId) {
+            try {
+                const response = await fetch(`/api/users/${userId}/follow`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt')}` }
+                });
+                if (!response.ok) throw new Error('Follow failed');
+                searchUsers();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+    </script>
+</body>
+</html>
