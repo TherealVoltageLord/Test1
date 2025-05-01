@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Voltura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-purple: #bc13fe;
+            --dark-bg: #0a0a0f;
+            --card-bg: #1a1a2f;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', system-ui;
+            margin: 0;
+        }
+
+        .notifications-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .notification-item {
+            background: var(--card-bg);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border: 1px solid #333;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .notification-item.unread {
+            border-left: 4px solid var(--neon-purple);
+        }
+
+        .notification-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-time {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .mark-read {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="notifications-container">
+        <h2>Notifications</h2>
+        <div id="notificationsList"></div>
+    </div>
+
+    <script>
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt')}` }
+                });
+                const notifications = await response.json();
+                
+                const container = document.getElementById('notificationsList');
+                container.innerHTML = notifications.map(notification => `
+                    <div class="notification-item ${notification.read ? '' : 'unread'}">
+                        <div class="notification-icon">
+                            ${getNotificationIcon(notification.type)}
+                        </div>
+                        <div class="notification-content">
+                            <p>${formatNotificationText(notification)}</p>
+                            <div class="notification-time">
+                                ${new Date(notification.createdAt).toLocaleString()}
+                            </div>
+                        </div>
+                        ${!notification.read ? `
+                        <button class="mark-read" onclick="markAsRead('${notification.id}')">
+                            <i class="fas fa-check"></i>
+                        </button>` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        function getNotificationIcon(type) {
+            const icons = {
+                'like': '❤️',
+                'comment': '💬',
+                'follow': '👤',
+                'new_report': '⚠️'
+            };
+            return icons[type] || '🔔';
+        }
+
+        function formatNotificationText(notification) {
+            switch(notification.type) {
+                case 'like':
+                    return `${notification.data.username} liked your post`;
+                case 'comment':
+                    return `${notification.data.username} commented: "${notification.data.text}"`;
+                case 'follow':
+                    return `${notification.data.username} started following you`;
+                case 'new_report':
+                    return `New report (${notification.data.type}) requires attention`;
+                default:
+                    return 'New notification';
+            }
+        }
+
+        async function markAsRead(notificationId) {
+            try {
+                await fetch(`/api/notifications/${notificationId}`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt')}` }
+                });
+                loadNotifications();
+            } catch (error) {
+                console.error('Error marking as read:', error);
+            }
+        }
+
+        loadNotifications();
+    </script>
+</body>
+</html>
