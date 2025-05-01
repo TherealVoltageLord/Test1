@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Voltura</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-purple: #bc13fe;
+            --dark-bg: #0a0a0f;
+            --card-bg: #1a1a2f;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', system-ui;
+            margin: 0;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-button.active {
+            border-color: var(--neon-purple);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        th {
+            background: #0a0a0f;
+        }
+
+        select {
+            background: var(--dark-bg);
+            color: white;
+            border: 1px solid #333;
+            padding: 0.3rem;
+            border-radius: 4px;
+        }
+
+        .action-btn {
+            background: var(--neon-purple);
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Admin Dashboard</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <p id="totalUsers">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Active Reports</h3>
+                <p id="activeReports">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>New Signups</h3>
+                <p id="newSignups">0</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('users')">User Management</button>
+            <button class="tab-button" onclick="showTab('reports')">Reports</button>
+        </div>
+
+        <div id="usersTab">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersList"></tbody>
+            </table>
+        </div>
+
+        <div id="reportsTab" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Target</th>
+                        <th>Reporter</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="reportsList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadAdminData() {
+            try {
+                const [usersRes, reportsRes] = await Promise.all([
+                    fetch('/api/admin/users', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt')}` }
+                    }),
+                    fetch('/api/reports', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt')}` }
+                    })
+                ]);
+
+                const usersData = await usersRes.json();
+                const reports = await reportsRes.json();
+
+                document.getElementById('totalUsers').textContent = usersData.total;
+                document.getElementById('activeReports').textContent = Object.values(reports).filter(r => r.status === 'pending').length;
+                
+                // Populate users table
+                const usersList = document.getElementById('usersList');
+                usersList.innerHTML = usersData.users.map(user => `
+                    <tr>
+                        <td>${user.username}</td>
+                        <td>${user.email || '-'}</td>
+                        <td>
+                            <select onchange="updateRole('${user.id}', this.value)">
+                                ${Object.values(CONFIG.ROLES).map(role => `
+                                    <option value="${role}" ${user.role === role ? 'selected' : ''}>${role}</option>
+                                `).join('')}
+                            </select>
+                        </td>
+                        <td>
+                            <select onchange="updateStatus('${user.id}', this.value)">
+                                <option value="true" ${user.isActive ? 'selected' : ''}>Active</option>
+                                <option value="false" ${!user.isActive ? 'selected' : ''}>Suspended</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="viewUser('${user.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Populate reports table
+                const reportsList = document.getElementById('reportsList');
+                reportsList.innerHTML = Object.values(reports).map(report => `
+                    <tr>
+                        <td>${report.type}</td>
+                        <td>${report.targetId}</td>
+                        <td>${report.reporterUserId}</td>
+                        <td>${report.status}</td>
+                        <td>
+                            <select onchange="handleReportAction('${report.id}', this.value)">
+                                ${CONFIG.REPORT_ACTIONS.map(action => `
+                                    <option value="${action}">${action}</option>
+                                `).join('')}
+                            </select>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Admin data error:', error);
+            }
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#usersTab, #reportsTab').forEach(tab => tab.style.display = 'none');
+            
+            document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}Tab`).style.display = 'block';
+        }
+
+        async function updateRole(userId, role) {
+            try {
+                await fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ role })
+                });
+            } catch (error) {
+                console.error('Role update failed:', error);
+            }
+        }
+
+        async function updateStatus(userId, status) {
+            try {
+                await fetch(`/api/admin/users/${userId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ isActive: status === 'true' })
+                });
+            } catch (error) {
+                console.error('Status update failed:', error);
+            }
+        }
+
+        loadAdminData();
+    </script>
+</body>
+</html>
