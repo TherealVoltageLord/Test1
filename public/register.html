@@ -4,65 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voltura - Register</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #BC13FE;
-            --dark: #0A081A;
-            --accent: #00F3FF;
-            --light: rgba(255, 255, 255, 0.9);
-            --error: #ff4d4d;
+            --neon-purple: #bc13fe;
+            --dark-bg: #0a0a0f;
+            --card-bg: #1a1a2f;
+            --input-bg: #0a0a0f;
+            --error: #ff3860;
             --success: #4dff4d;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-
         body {
-            min-height: 100vh;
+            background: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', system-ui;
+            margin: 0;
             display: flex;
-            align-items: center;
             justify-content: center;
-            background: var(--dark);
-            padding: 1rem;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(188, 19, 254, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(0, 243, 255, 0.1) 0%, transparent 20%);
+            align-items: center;
+            min-height: 100vh;
         }
 
-        .container {
-            background: rgba(11, 9, 26, 0.95);
+        .auth-container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            border: 1px solid var(--neon-purple);
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.2);
             width: 100%;
             max-width: 500px;
-            padding: 2.5rem;
-            border-radius: 1rem;
-            border: 1px solid var(--primary);
-            box-shadow: 0 0 2rem rgba(188, 19, 254, 0.2);
-            backdrop-filter: blur(10px);
-            z-index: 1;
+            margin: 1rem;
         }
 
-        .header {
+        .auth-header {
             text-align: center;
             margin-bottom: 2rem;
         }
 
-        .header h1 {
-            background: linear-gradient(45deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .header p {
-            color: rgba(255, 255, 255, 0.7);
+        .auth-header h1 {
+            margin: 0 0 0.5rem 0;
+            color: var(--neon-purple);
         }
 
         .form-group {
@@ -75,63 +57,60 @@
             left: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--accent);
+            color: var(--neon-purple);
         }
 
         input {
-            width: 100%;
-            padding: 0.9rem 1rem 0.9rem 2.8rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(188, 19, 254, 0.3);
-            border-radius: 0.5rem;
-            color: var(--light);
+            width: 80%;
+            padding: 0.8rem 1rem 0.8rem 2.5rem;
+            background: var(--input-bg);
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: white;
             font-size: 1rem;
-            transition: all 0.3s ease;
         }
 
         input:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(188, 19, 254, 0.2);
+            outline: 2px solid var(--neon-purple);
         }
 
         .password-toggle {
             position: absolute;
+            background: var(--dark-bg);
             right: 1rem;
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
-            color: var(--accent);
+            color: var(--neon-purple);
         }
 
-        .password-strength {
-            height: 4px;
-            background: rgba(255,255,255,0.1);
-            margin-top: 0.5rem;
-            border-radius: 2px;
-            overflow: hidden;
+        .password-criteria {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
         }
 
-        .strength-bar {
-            height: 100%;
-            width: 0;
-            transition: all 0.3s ease;
+        .criteria-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
         }
 
-        .weak { background: var(--error); width: 33% }
-        .medium { background: orange; width: 66% }
-        .strong { background: var(--success); width: 100% }
-
-        .validation-message {
-            color: var(--error);
+        .criteria-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
             font-size: 0.9rem;
-            margin-top: 0.25rem;
-            display: none;
         }
 
-        .file-input-container {
-            text-align: center;
-            margin: 1.5rem 0;
+        .criteria-item i {
+            color: var(--error);
+        }
+
+        .criteria-item.valid i {
+            color: var(--success);
         }
 
         .file-input-label {
@@ -139,12 +118,11 @@
             align-items: center;
             gap: 0.5rem;
             padding: 0.8rem 1.5rem;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid var(--primary);
-            border-radius: 0.5rem;
-            color: var(--accent);
+            background: var(--input-bg);
+            border: 1px solid var(--neon-purple);
+            border-radius: 5px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: 0.3s;
         }
 
         .file-input-label:hover {
@@ -158,25 +136,24 @@
             object-fit: cover;
             margin: 1rem auto;
             display: none;
-            border: 2px solid var(--accent);
+            border: 2px solid var(--neon-purple);
         }
 
         button[type="submit"] {
             width: 100%;
             padding: 1rem;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: var(--neon-purple);
             border: none;
-            border-radius: 0.5rem;
-            color: var(--light);
+            border-radius: 5px;
+            color: white;
             font-size: 1rem;
-            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: 0.3s;
+            margin-top: 1rem;
         }
 
         button[type="submit"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(188, 19, 254, 0.4);
+            opacity: 0.9;
         }
 
         .toast {
@@ -184,242 +161,187 @@
             bottom: 2rem;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--dark);
-            color: var(--light);
+            background: var(--card-bg);
+            color: white;
             padding: 1rem 2rem;
-            border-radius: 0.5rem;
-            border: 1px solid var(--primary);
-            box-shadow: 0 0 1rem rgba(188, 19, 254, 0.2);
+            border-radius: 5px;
+            border: 1px solid var(--neon-purple);
             display: none;
-            z-index: 1000;
-            animation: slideIn 0.3s ease-out;
-            max-width: 90%;
-            text-align: center;
+            box-shadow: 0 0 10px rgba(188, 19, 254, 0.3);
         }
 
-        @keyframes slideIn {
-            from { bottom: -50px; opacity: 0; }
-            to { bottom: 2rem; opacity: 1; }
+        .switch-auth {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .switch-auth a {
+            color: var(--neon-purple);
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Create Account</h1>
-            <p>Start your Voltura journey</p>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1><i class="fas fa-user-plus"></i> Register</h1>
+            <p>Join the Voltura community</p>
         </div>
 
-        <form id="registerForm">
-            <div class="file-input-container">
-                <label class="file-input-label">
-                    <i class="fas fa-camera"></i>
-                    Upload Profile Picture
-                    <input type="file" id="profilePic" accept="image/*" hidden>
-                </label>
-                <img id="profilePreview" alt="Profile preview">
-            </div>
-
+        <form id="registerForm" enctype="multipart/form-data">
             <div class="form-group">
                 <i class="fas fa-user input-icon"></i>
-                <input type="text" id="username" placeholder="Username" required>
-                <div class="validation-message" id="usernameError"></div>
+                <input type="text" id="regUsername" name="username" placeholder="Username" required>
             </div>
 
             <div class="form-group">
                 <i class="fas fa-envelope input-icon"></i>
-                <input type="email" id="email" placeholder="Email" required>
-                <div class="validation-message" id="emailError"></div>
+                <input type="email" id="email" name="email" placeholder="Email" required>
             </div>
 
             <div class="form-group">
                 <i class="fas fa-lock input-icon"></i>
-                <input type="password" id="password" placeholder="Password" required>
-                <i class="fas fa-eye password-toggle" id="togglePassword"></i>
-                <div class="password-strength">
-                    <div class="strength-bar" id="strengthBar"></div>
-                </div>
-                <div class="validation-message" id="passwordError"></div>
+                <input type="password" id="regPassword" name="password" placeholder="Password" required>
+                <button type="button" class="password-toggle">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+
+            <div class="password-criteria">
+                <ul class="criteria-list">
+                    <li class="criteria-item" data-criteria="length">
+                        <i class="fas fa-times"></i>
+                        Minimum 8 characters
+                    </li>
+                    <li class="criteria-item" data-criteria="uppercase">
+                        <i class="fas fa-times"></i>
+                        At least one uppercase letter
+                    </li>
+                    <li class="criteria-item" data-criteria="lowercase">
+                        <i class="fas fa-times"></i>
+                        At least one lowercase letter
+                    </li>
+                    <li class="criteria-item" data-criteria="number">
+                        <i class="fas fa-times"></i>
+                        At least one number
+                    </li>
+                    <li class="criteria-item" data-criteria="special">
+                        <i class="fas fa-times"></i>
+                        At least one special character
+                    </li>
+                </ul>
             </div>
 
             <div class="form-group">
-                <i class="fas fa-lock input-icon"></i>
-                <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
-                <i class="fas fa-eye password-toggle" id="toggleConfirmPassword"></i>
-                <div class="validation-message" id="confirmPasswordError"></div>
+                <i class="fas fa-calendar-alt input-icon"></i>
+                <input type="number" id="age" name="age" placeholder="Age" min="13" required>
             </div>
 
             <div class="form-group">
-                <i class="fas fa-calendar input-icon"></i>
-                <input type="text" id="birthdate" placeholder="Select Birthdate" readonly>
-                <div class="validation-message" id="ageError"></div>
+                <label class="file-input-label">
+                    <i class="fas fa-camera"></i>
+                    <span>Upload Profile Picture</span>
+                    <input type="file" id="profilePic" name="profilePic" accept="image/*" hidden>
+                </label>
+                <img id="profilePreview" src="#" alt="Profile preview">
             </div>
 
-            <button type="submit" id="submitBtn">Create Account</button>
-
-            <div class="auth-links">
-                Already have an account? <a href="login.html">Sign In</a>
-            </div>
+            <button type="submit">Create Account</button>
         </form>
+
+        <div class="switch-auth">
+            Already have an account? <a href="/login.html">Login here</a>
+        </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+    <div id="toast" class="toast"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize date picker
-            const birthdatePicker = flatpickr("#birthdate", {
-                dateFormat: "Y-m-d",
-                maxDate: new Date().fp_incr(-365 * 13),
-                allowInput: true
-            });
+        // Password validation logic
+        document.getElementById('regPassword').addEventListener('input', function(e) {
+            const password = e.target.value;
+            const criteria = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /\d/.test(password),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+            };
 
-            // Profile picture handling
-            const profilePic = document.getElementById('profilePic');
-            const profilePreview = document.getElementById('profilePreview');
-
-            profilePic.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        profilePreview.style.display = 'block';
-                        profilePreview.src = event.target.result;
-                    };
-                    reader.readAsDataURL(file);
+            document.querySelectorAll('.criteria-item').forEach(item => {
+                const criterion = item.dataset.criteria;
+                const icon = item.querySelector('i');
+                if (criteria[criterion]) {
+                    item.classList.add('valid');
+                    icon.className = 'fas fa-check';
+                } else {
+                    item.classList.remove('valid');
+                    icon.className = 'fas fa-times';
                 }
             });
+        });
 
-            // Password visibility toggle
-            function setupPasswordToggle(passwordId, toggleId) {
-                const passwordInput = document.getElementById(passwordId);
-                const toggleButton = document.getElementById(toggleId);
-                
-                toggleButton.addEventListener('click', () => {
-                    const type = passwordInput.type === 'password' ? 'text' : 'password';
-                    passwordInput.type = type;
-                    toggleButton.classList.toggle('fa-eye-slash');
-                });
+        // Password visibility toggle
+        document.querySelector('.password-toggle').addEventListener('click', function() {
+            const passwordField = document.getElementById('regPassword');
+            const isPassword = passwordField.type === 'password';
+            passwordField.type = isPassword ? 'text' : 'password';
+            this.querySelector('i').className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+        });
+
+        // Profile picture preview
+        document.getElementById('profilePic').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('profilePreview');
+            if (file) {
+                preview.style.display = 'block';
+                preview.src = URL.createObjectURL(file);
             }
+        });
 
-            setupPasswordToggle('password', 'togglePassword');
-            setupPasswordToggle('confirmPassword', 'toggleConfirmPassword');
+        // Form submission handler
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const toast = document.getElementById('toast');
 
-            // Password strength checker
-            function checkPasswordStrength(password) {
-                const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-                const mediumRegex = /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
-                
-                if (strongRegex.test(password)) return 'strong';
-                if (mediumRegex.test(password)) return 'medium';
-                return 'weak';
-            }
-
-            document.getElementById('password').addEventListener('input', function(e) {
-                const strength = checkPasswordStrength(e.target.value);
-                const strengthBar = document.getElementById('strengthBar');
-                strengthBar.className = `strength-bar ${strength}`;
-            });
-
-            // Form submission
-            document.getElementById('registerForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const formData = new FormData();
-                const username = document.getElementById('username').value.trim();
-                const email = document.getElementById('email').value.trim();
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                const birthdate = document.getElementById('birthdate').value;
-                const profileFile = document.getElementById('profilePic').files[0];
-
-                // Clear previous errors
-                document.querySelectorAll('.validation-message').forEach(el => {
-                    el.style.display = 'none';
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    body: formData
                 });
 
-                let isValid = true;
-
-                // Username validation
-                if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
-                    document.getElementById('usernameError').textContent = 
-                        'Username must be 3-30 characters (letters, numbers, underscores)';
-                    document.getElementById('usernameError').style.display = 'block';
-                    isValid = false;
-                }
-
-                // Password validation
-                const strength = checkPasswordStrength(password);
-                if (strength === 'weak') {
-                    document.getElementById('passwordError').textContent = 
-                        'Password must contain at least 8 characters with uppercase, number, and special character';
-                    document.getElementById('passwordError').style.display = 'block';
-                    isValid = false;
-                }
-
-                if (password !== confirmPassword) {
-                    document.getElementById('confirmPasswordError').textContent = 
-                        'Passwords do not match';
-                    document.getElementById('confirmPasswordError').style.display = 'block';
-                    isValid = false;
-                }
-
-                // Age validation
-                const birthDate = new Date(birthdate);
-                const ageDifMs = Date.now() - birthDate.getTime();
-                const ageDate = new Date(ageDifMs);
-                const age = Math.abs(ageDate.getUTCFullYear() - 1970);
+                const data = await response.json();
                 
-                if (age < 13) {
-                    document.getElementById('ageError').textContent = 
-                        'You must be at least 13 years old to register';
-                    document.getElementById('ageError').style.display = 'block';
-                    isValid = false;
+                if (response.ok) {
+                    showToast('Registration successful! Redirecting...', 'success');
+                    localStorage.setItem('jwt', data.token);
+                    setTimeout(() => window.location.href = '/dashboard.html', 1500);
+                } else {
+                    showToast(data.error || 'Registration failed', 'error');
                 }
+            } catch (error) {
+                showToast('Network error. Please try again.', 'error');
+            }
+        });
 
-                if (!isValid) return;
+        // Toast notification system
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.color = type === 'error' ? 'var(--error)' : 'var(--success)';
+            toast.style.borderColor = type === 'error' ? 'var(--error)' : 'var(--success)';
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 3000);
+        }
 
-                // Build FormData
-                formData.append('username', username);
-                formData.append('email', email);
-                formData.append('password', password);
-                formData.append('age', age);
-                if (profileFile) formData.append('profilePic', profileFile);
-
-                try {
-                    const response = await fetch('/api/register', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Registration failed');
-                    }
-
-                    // Store token and user data
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    // Redirect to dashboard
-                    window.location.href = 'dashboard.html';
-
-                } catch (error) {
-                    showToast(error.message, 'error');
+        // Prevent form submission when Enter is pressed in non-submit inputs
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && e.target.type !== 'submit') {
+                    e.preventDefault();
                 }
             });
-
-            function showToast(message, type = '') {
-                const toast = document.getElementById('toast');
-                toast.textContent = message;
-                toast.className = `toast ${type}`;
-                toast.style.display = 'block';
-                setTimeout(() => {
-                    toast.style.display = 'none';
-                }, 3000);
-            }
         });
     </script>
 </body>
